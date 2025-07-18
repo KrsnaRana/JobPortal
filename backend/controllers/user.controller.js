@@ -1,4 +1,4 @@
-import { User } from "../models/user.model"
+import { User } from "../models/user.model.js"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 
@@ -28,6 +28,10 @@ export const register = async(req, res) => {
             password: hashedPassword,
             role,
         })
+        return res.status(201).json({
+            message: "Account created successfully.",
+            success: true
+        });
     } catch (error) {
         console.log(error);
 
@@ -43,22 +47,22 @@ export const login = async(req, res) => {
                 success: false
             })
         }
-        let user = await User.findOne(email);
+        let user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({
                 message: "Incorrect email or password",
                 success: false
             })
         }
-        const isPasswordMatch = await bcrypt.compare(password.user.password)
+        const isPasswordMatch = await bcrypt.compare(password, user.password)
         if (!isPasswordMatch) {
             return res.status(400).json({
                 message: "Incorrect email or password",
                 success: false
             })
-        }
+        };
         // check role is correct or not 
-        if (!role != user.role) {
+        if (role != user.role) {
             return res.status(400).json({
                 message: "Account doesn't exist with current role",
                 success: false
@@ -67,18 +71,20 @@ export const login = async(req, res) => {
         const tokenData = {
             userId: user._id,
         }
-        const token = jwt.sign(tokenData, process.env.SECRET_KEY, { expiresIn: 'id' })
+        const token = await jwt.sign(tokenData, process.env.SECRET_KEY, { expiresIn: '1d' })
 
         user = {
             _id: user._id,
             fullName: user.fullName,
+            email: user.email,
             phoneNumber: user.phoneNumber,
             role: user.role,
             profile: user.profile
         }
 
-        return res.status(200).cookie("token", token, { maxAge: 1 * 24 * 60 * 60 * 1000, httpsOnly: true, sameSize: 'strict' }).json({
+        return res.status(200).cookie("token", token, { maxAge: 1 * 24 * 60 * 60 * 1000, httpOnly: true, sameSize: 'Strict' }).json({
             message: `Welcome back ${user.fullName}`,
+            user,
             success: true,
         })
     } catch (error) {
@@ -102,15 +108,13 @@ export const updateProfile = async(req, res) => {
     try {
         const { fullName, email, phoneNumber, bio, skills } = req.body;
         const file = req.file;
-        if (!fullName || !email || !phoneNumber || !bio || !skills) {
-            return res.status(400).json({
-                message: "SOmething is missing",
-                success: false
-            })
-        }
+
         // cloudinary ayega idhar
 
-        const skillsArray = skills.split(",");
+        let skillsArray;
+        if (skills) {
+            skillsArray = skills.split(",");
+        }
         const userId = req.id; // midleware authentication
         let user = await User.findById(userId);
         if (!user) {
@@ -120,11 +124,13 @@ export const updateProfile = async(req, res) => {
             })
         }
         // updating data
-        user.fullName = fullName;
-        user.email = email;
-        user.phoneNumber = phoneNumber;
-        user.profile.bio = bio;
-        user.profile.skills = skillsArray;
+
+        if (fullName) user.fullName = fullName
+        if (email) user.email = email
+        if (phoneNumber) user.phoneNumber = phoneNumber
+        if (bio) user.profile.bio = bio
+        if (skills) user.profile.skills = skillsArray
+
 
         // resume comes later here....
 
@@ -133,6 +139,7 @@ export const updateProfile = async(req, res) => {
         user = {
             _id: user._id,
             fullName: user.fullName,
+            email: user.email,
             phoneNumber: user.phoneNumber,
             role: user.role,
             profile: user.profile
