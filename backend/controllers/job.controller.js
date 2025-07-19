@@ -23,7 +23,7 @@ export const postJob = async(req, res) => {
                 company: companyId,
                 createdBy: userId
             })
-            return res.status(201).jsoon({
+            return res.status(201).json({
                 message: "New Job created Successfully",
                 job,
                 success: true
@@ -43,7 +43,9 @@ export const getAllJobs = async(req, res) => {
                     { description: { $regex: keyword, $options: "i" } },
                 ]
             };
-            const jobs = await Job.find(query);
+            const jobs = await Job.find(query).populate({
+                path: "company"
+            }).sort({ createdAt: -1 });
             if (!jobs) {
                 return res.status(404).json({
                     message: "job not found",
@@ -69,7 +71,7 @@ export const getJobById = async(req, res) => {
                     success: false
                 })
             }
-            return res.status(200).jsoon({
+            return res.status(200).json({
                 job,
                 success: true
             })
