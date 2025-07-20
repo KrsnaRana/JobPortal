@@ -4,9 +4,11 @@ import { Button } from '../ui/button'
 import { Avatar, AvatarImage } from '@radix-ui/react-avatar'
 import { Popover, PopoverContent, PopoverTrigger } from '@radix-ui/react-popover'
 import { LogOut, User2 } from 'lucide-react'
+import { useSelector } from 'react-redux'
+import store from '@/redux/store'
 
 function Navbar() {
-    const user = false;
+    const { user } = useSelector(store => store.auth);
     return (
         <div className='bg-white'>
             <div className='flex items-center justify-between mx-auto max-w-7xl h-16'>
@@ -15,15 +17,19 @@ function Navbar() {
                 </div>
                 <div className='flex items-center gap-2'>
                     <ul className='flex font-medium items-center gap-5'>
-                        <li>Home</li>
-                        <li>Jobs</li>
-                        <li>Browse</li>
+                        <li><Link to="/">Home</Link></li>
+                        <li><Link to="/jobs">Jobs</Link></li>
+                        <li><Link to="/browse">Browse</Link></li>
                     </ul>
                     {
                         !user ? (
                             <div className='flex itmes-center gap-1 '>
-                                <Button variant="outline">Login</Button>
-                                <Button className="bg-[#6A38C2] hover:bg-[#5b30a6]">Signup</Button>
+                                <Link to="/login">
+                                    <Button variant="outline">Login</Button>
+                                </Link>
+                                <Link to="/signup">
+                                    <Button className="bg-[#6A38C2] hover:bg-[#5b30a6]">Signup</Button>
+                                </Link>
                             </div>
                         ) : (
                             <Popover>
@@ -46,7 +52,7 @@ function Navbar() {
                                         <div className='flex flex-col my-2 text-gray-600'>
                                             <div className='flex w-fit items-centergap-2 cursor-pointer'>
                                                 <User2 />
-                                                <Button variant="link">View Profile</Button>
+                                                <Button variant="link"><Link to="/profile">Vire Profile</Link></Button>
                                             </div>
                                             <div className='flex w-fit items-centergap-2 cursor-pointer'>
                                                 <LogOut />
